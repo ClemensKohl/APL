@@ -233,10 +233,10 @@ run_cacomp <- function(obj,
     # source_python('./python_svd.py')
     file.py <- system.file("python/python_svd.py", package="APL")
 
-    proc <- basiliskStart(env1)
-    on.exit(basiliskStop(proc))
+    proc <- basilisk::basiliskStart(env1)
+    on.exit(basilisk::basiliskStop(proc))
 
-    SVD <- basiliskRun(proc, function(arg1) {
+    SVD <- basilisk::basiliskRun(proc, function(arg1) {
 
 		reticulate::source_python(file.py)
         output <- svd_torch(arg1)
