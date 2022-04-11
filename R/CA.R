@@ -115,6 +115,46 @@ var_rows <- function(mat, top = 5000){
 }
 
 
+run_python_SVD <- function(mat){
+  
+  proc <- basilisk::basiliskStart(env1)
+  # on.exit(basilisk::basiliskStop(proc))
+  
+  SVD <- basilisk::basiliskRun(proc, function(mat) {
+    
+    file.py <- system.file("python/python_svd.py", package="APL")
+    reticulate::source_python(file.py)
+
+    SVD <- svd_torch(mat)
+
+  #   pytorch <- reticulate::import("torch")
+  #   cat("pytorch")
+  #   np <- reticulate::import("numpy")
+  # 
+  #   x <- pytorch$from_numpy(np$array(mat))
+  #   
+  #   cat("svd")
+  #   
+  #   usv = pytorch$svd(x)
+  #   cat("svd done")
+  #   
+  #   u = usv$U$numpy()
+  #   s = usv$S$numpy()
+  #   v = usv$V$numpy()
+  # 
+  #   SVD <- list("U" = u,
+  #               "D" = s,
+  #               "V" = v)
+    return(SVD)
+  }, mat=mat)
+  basiliskStop(proc)
+  
+  names(SVD) <- c("U", "D", "V")
+  SVD$D <- as.vector(SVD$D)
+  
+  return(SVD)
+}
+
 #' Internal function for `cacomp`
 #'
 #' @description
@@ -228,31 +268,32 @@ run_cacomp <- function(obj,
  #   names(SVD) <- c("U", "D", "V")
  #   SVD$D <- as.vector(SVD$D)
 
-    svd_torch <- NULL
-    # require(reticulate)
-    # source_python('./python_svd.py')
-    file.py <- system.file("python/python_svd.py", package="APL")
+#     svd_torch <- NULL
+#     # require(reticulate)
+#     # source_python('./python_svd.py')
+#     file.py <- system.file("python/python_svd.py", package="APL")
+# 
+#     proc <- basilisk::basiliskStart(env1)
+#     on.exit(basilisk::basiliskStop(proc))
+# 
+#     SVD <- basilisk::basiliskRun(proc, function(arg1) {
+# 
+# 		    reticulate::source_python(file.py)
+#         output <- svd_torch(arg1)
+# 
+#         # The return value MUST be a pure R object, i.e., no reticulate
+#         # Python objects, no pointers to shared memory.
+#         output
+#     }, arg1=S)
+# 
+#     
+#    # SVD <- svd_torch(S)
+#     # SVD <- svd_linalg_torch(S)
+#     names(SVD) <- c("U", "D", "V")
+#     SVD$D <- as.vector(SVD$D)
 
-    proc <- basilisk::basiliskStart(env1)
-    on.exit(basilisk::basiliskStop(proc))
-
-    SVD <- basilisk::basiliskRun(proc, function(arg1) {
-
-		reticulate::source_python(file.py)
-        output <- svd_torch(arg1)
-
-        # The return value MUST be a pure R object, i.e., no reticulate
-        # Python objects, no pointers to shared memory.
-        output
-    }, arg1=S)
-
+    SVD <- run_python_SVD(S)
     
-   # SVD <- svd_torch(S)
-    # SVD <- svd_linalg_torch(S)
-    names(SVD) <- c("U", "D", "V")
-    SVD$D <- as.vector(SVD$D)
-
-
   } else {
 
     SVD <- svd(S, nu = dims, nv = dims)
