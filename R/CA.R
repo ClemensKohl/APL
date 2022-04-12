@@ -115,6 +115,32 @@ var_rows <- function(mat, top = 5000){
 }
 
 
+#' Run pytorch SVD via basilisk
+#' @param mat A matrix
+#' @returns
+#' list with SVD results.
+run_python_SVD <- function(mat){
+  
+  proc <- basilisk::basiliskStart(env1)
+  
+  SVD <- basilisk::basiliskRun(proc, function(mat) {
+    
+    file.py <- system.file("python/python_svd.py", package="APL")
+    reticulate::source_python(file.py)
+    SVD <- svd_torch(mat)
+
+    return(SVD)
+
+  }, mat=mat)
+  
+  basiliskStop(proc)
+  
+  names(SVD) <- c("U", "D", "V")
+  SVD$D <- as.vector(SVD$D)
+  
+  return(SVD)
+}
+
 #' Internal function for `cacomp`
 #'
 #' @description
@@ -219,15 +245,41 @@ run_cacomp <- function(obj,
   # message("Running singular value decomposition ...")
 
   if (python == TRUE){
-    svd_torch <- NULL
+ #   svd_torch <- NULL
     # require(reticulate)
     # source_python('./python_svd.py')
-    reticulate::source_python(system.file("python/python_svd.py", package = "APL"))
-    SVD <- svd_torch(S)
+ #   reticulate::source_python(system.file("python/python_svd.py", package = "APL"))
+ #   SVD <- svd_torch(S)
     # SVD <- svd_linalg_torch(S)
-    names(SVD) <- c("U", "D", "V")
-    SVD$D <- as.vector(SVD$D)
+ #   names(SVD) <- c("U", "D", "V")
+ #   SVD$D <- as.vector(SVD$D)
 
+#     svd_torch <- NULL
+#     # require(reticulate)
+#     # source_python('./python_svd.py')
+#     file.py <- system.file("python/python_svd.py", package="APL")
+# 
+#     proc <- basilisk::basiliskStart(env1)
+#     on.exit(basilisk::basiliskStop(proc))
+# 
+#     SVD <- basilisk::basiliskRun(proc, function(arg1) {
+# 
+# 		    reticulate::source_python(file.py)
+#         output <- svd_torch(arg1)
+# 
+#         # The return value MUST be a pure R object, i.e., no reticulate
+#         # Python objects, no pointers to shared memory.
+#         output
+#     }, arg1=S)
+# 
+#     
+#    # SVD <- svd_torch(S)
+#     # SVD <- svd_linalg_torch(S)
+#     names(SVD) <- c("U", "D", "V")
+#     SVD$D <- as.vector(SVD$D)
+
+    SVD <- run_python_SVD(S)
+    
   } else {
 
     SVD <- svd(S, nu = dims, nv = dims)
