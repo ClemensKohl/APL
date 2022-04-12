@@ -115,38 +115,24 @@ var_rows <- function(mat, top = 5000){
 }
 
 
+#' Run pytorch SVD via basilisk
+#' @param mat A matrix
+#' @returns
+#' list with SVD results.
 run_python_SVD <- function(mat){
   
   proc <- basilisk::basiliskStart(env1)
-  # on.exit(basilisk::basiliskStop(proc))
   
   SVD <- basilisk::basiliskRun(proc, function(mat) {
     
     file.py <- system.file("python/python_svd.py", package="APL")
     reticulate::source_python(file.py)
-
     SVD <- svd_torch(mat)
 
-  #   pytorch <- reticulate::import("torch")
-  #   cat("pytorch")
-  #   np <- reticulate::import("numpy")
-  # 
-  #   x <- pytorch$from_numpy(np$array(mat))
-  #   
-  #   cat("svd")
-  #   
-  #   usv = pytorch$svd(x)
-  #   cat("svd done")
-  #   
-  #   u = usv$U$numpy()
-  #   s = usv$S$numpy()
-  #   v = usv$V$numpy()
-  # 
-  #   SVD <- list("U" = u,
-  #               "D" = s,
-  #               "V" = v)
     return(SVD)
+
   }, mat=mat)
+  
   basiliskStop(proc)
   
   names(SVD) <- c("U", "D", "V")
